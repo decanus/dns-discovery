@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"context"
 	"encoding/base32"
 	"encoding/base64"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 var (
@@ -15,37 +17,45 @@ var (
 	b32format = base32.StdEncoding.WithPadding(base32.NoPadding)
 )
 
-type root struct {
-	root string
-	lroot string
-	seq uint
-	sig []byte
+type Tree struct {
+	name string
+	r Resolver
 }
 
-func parseRoot(e string) (root, error) {
-	var eroot, lroot, sig string
-	var seq uint
-	if _, err := fmt.Sscanf(e, RootPrefix+" r=%s l=%s seq=%d sig=%s", &eroot, &lroot, &seq, &sig); err != nil {
-		return root{}, errors.New("invalid root")
-	}
-	if !isValidHash(eroot) || !isValidHash(lroot) {
-		return root{}, errors.New("invalid hashes found")
-	}
-	sigb, err := b64format.DecodeString(sig)
-	if err != nil || len(sigb) != crypto.SignatureLength {
-		return root{}, errors.New("invalid signature")
-	}
-	return root{eroot, lroot, seq, sigb}, nil
+func (t *Tree) Sync(ctx context.Context, out chan <- ma.Multiaddr) {
+	// @todo sync the entire tree, pump results into a channel maybe?
+	// @todo validate root
+
 }
 
-func isValidHash(s string) bool {
-	dlen := b32format.DecodedLen(len(s))
-	if dlen < minHashLength || dlen > 32 || strings.ContainsAny(s, "\n\r") {
-		return false
+func (t *Tree) doSync(ctx context.Context, out chan <- ma.Multiaddr, name string) {
+	root, err := t.resolveRoot(ctx, name)
+	if err != nil {
+		// @todo
 	}
-	buf := make([]byte, 32)
-	_, err := b32format.Decode(buf, []byte(s))
-	return err == nil
+
+	// @todo get record
+
+	// @todo evaluate record type
+
+	// @todo if leaf push into out
 }
 
+func (t *Tree) resolveRoot(ctx context.Context, name string) (root, error) {
+	txts, err := t.r.LookupTXT(ctx, name)
+	if err != nil {
+		return root{}, err
+	}
 
+	for _, txt := range txts {
+		if strings.HasPrefix(txt, RootPrefix) {
+			return parseRoot(txt)
+		}
+	}
+
+	return root{}, errors.New("new root record found")
+}
+
+func (t *Tree) syncBranch() {
+
+}
