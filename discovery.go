@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/p2p/dnsdisc"
@@ -32,6 +33,8 @@ func (d *dnsDiscovery) FindPeers(ctx context.Context, ns string, opts ...discove
 		return nil, err
 	}
 
+	// @todo use options
+
 	c := make(chan peer.AddrInfo)
 
 	tree, err := d.c.SyncTree("ns")
@@ -40,16 +43,13 @@ func (d *dnsDiscovery) FindPeers(ctx context.Context, ns string, opts ...discove
 	}
 
 	if tree == nil {
-		// @todo
-		return nil, nil
+		return nil, errors.New("empty tree returned")
 	}
 
 	nodes := tree.Nodes()
 
 	go func() {
 		for _, n := range nodes {
-
-			// @todo create multi addr
 			addr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/udp/%d", n.IP(), n.TCP(), n.UDP()))
 			if err != nil {
 				continue
