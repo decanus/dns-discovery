@@ -21,8 +21,12 @@ type dnsDiscovery struct {
 	c dnsdisc.Client
 }
 
-func NewDNSDiscovery() discovery.Discoverer {
-	return &dnsDiscovery{}
+func NewDNSDiscovery(domain string, r Resolver, c dnsdisc.Client) discovery.Discoverer {
+	return &dnsDiscovery{
+		domain: domain,
+		r: r,
+		c: c,
+	}
 }
 
 func (d *dnsDiscovery) FindPeers(ctx context.Context, ns string, opts ...discovery.Option) (<-chan peer.AddrInfo, error) {
