@@ -41,7 +41,7 @@ func (d *dnsDiscovery) FindPeers(ctx context.Context, ns string, opts ...discove
 
 	c := make(chan peer.AddrInfo)
 
-	tree, err := d.c.SyncTree("ns")
+	tree, err := d.c.SyncTree(d.domain)
 	if err != nil {
 		return nil, err
 	}
