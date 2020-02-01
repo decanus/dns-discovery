@@ -52,9 +52,15 @@ func (d *dnsDiscovery) FindPeers(ctx context.Context, ns string, opts ...discove
 
 	nodes := tree.Nodes()
 
+	limit := options.Limit
+
 	// @todo move this into another function, more libp2p like.
 	go func() {
-		for _, n := range nodes {
+		for i, n := range nodes {
+			if limit >= i {
+				break
+			}
+
 			addr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/udp/%d", n.IP(), n.TCP(), n.UDP()))
 			if err != nil {
 				continue
